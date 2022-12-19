@@ -117,6 +117,13 @@ variable "saml_entity_id" {
 variable "saml_metadata_content" {
   description = "The metadata of the SAML application in xml format."
   type        = string
+  default     = ""
+}
+
+variable "saml_metadata_url" {
+  description = "The URL to fetch SAML metadata from (if saml_metadata_content is empty)."
+  type        = string
+  default     = ""
 }
 
 variable "saml_session_timeout" {
