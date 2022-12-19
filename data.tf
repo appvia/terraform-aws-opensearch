@@ -19,6 +19,6 @@ data "aws_iam_policy_document" "access_policy" {
 }
 
 data "http" "saml_metadata" {
-  count = var.saml_metadata_url ? 1 : 0
+  count = var.saml_metadata_url != "" ? 1 : 0
   url   = var.saml_metadata_url
 }
