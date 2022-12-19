@@ -1,9 +1,3 @@
-# provider "elasticsearch" {
-#   url         = "https://${aws_elasticsearch_domain.opensearch.domain_endpoint_options[0].custom_endpoint}"
-#   aws_region  = data.aws_region.current.name
-#   healthcheck = false
-# }
-
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0.1"
@@ -93,7 +87,7 @@ resource "aws_elasticsearch_domain_saml_options" "opensearch" {
 
     idp {
       entity_id        = var.saml_entity_id
-      metadata_content = sensitive(replace((var.saml_metadata_content != "" ? var.saml_metadata_content : data.http.saml_metadata[0].body), "\ufeff", ""))
+      metadata_content = sensitive(replace((var.saml_metadata_content != "" ? var.saml_metadata_content : data.http.saml_metadata[0].response_body), "\ufeff", ""))
     }
   }
 
