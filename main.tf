@@ -1,3 +1,9 @@
+provider "elasticsearch" {
+  url         = "https://${aws_elasticsearch_domain.opensearch.domain_endpoint_options[0].custom_endpoint}"
+  aws_region  = data.aws_region.current.name
+  healthcheck = false
+}
+
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0.1"

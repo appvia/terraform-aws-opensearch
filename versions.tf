@@ -6,5 +6,9 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 4.12.0"
     }
+    elasticsearch = {
+      source  = "phillbaker/elasticsearch"
+      version = ">= 2.0.0"
+    }
   }
 }
