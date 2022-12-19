@@ -1,3 +1,9 @@
+provider "elasticsearch" {
+  url         = "https://${aws_opensearch_domain.opensearch.domain_endpoint_options[0].custom_endpoint}"
+  aws_region  = data.aws_region.current.name
+  healthcheck = false
+}
+
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0.1"
@@ -15,9 +21,9 @@ resource "aws_iam_service_linked_role" "es" {
   aws_service_name = "es.amazonaws.com"
 }
 
-resource "aws_elasticsearch_domain" "opensearch" {
+resource "aws_opensearch_domain" "opensearch" {
   domain_name           = var.cluster_name
-  elasticsearch_version = "OpenSearch_${var.cluster_version}"
+  engine_version = "OpenSearch_${var.cluster_version}"
   access_policies       = data.aws_iam_policy_document.access_policy.json
 
   cluster_config {
@@ -40,6 +46,11 @@ resource "aws_elasticsearch_domain" "opensearch" {
         availability_zone_count = zone_awareness_config.value
       }
     }
+  }
+
+  ebs_options {
+    ebs_enabled = var.ebs_enabled
+    volume_size = var.ebs_volume_size
   }
 
   advanced_security_options {
@@ -74,8 +85,8 @@ resource "aws_elasticsearch_domain" "opensearch" {
   depends_on = [aws_iam_service_linked_role.es]
 }
 
-resource "aws_elasticsearch_domain_saml_options" "opensearch" {
-  domain_name = aws_elasticsearch_domain.opensearch.domain_name
+resource "aws_opensearch_domain_saml_options" "opensearch" {
+  domain_name = aws_opensearch_domain.opensearch.domain_name
 
   saml_options {
     enabled                 = true
@@ -87,7 +98,14 @@ resource "aws_elasticsearch_domain_saml_options" "opensearch" {
 
     idp {
       entity_id        = var.saml_entity_id
-      metadata_content = sensitive(replace(var.saml_metadata_content, "\ufeff", ""))
+      metadata_content = sensitive(replace((var.saml_metadata_content != "" ? var.saml_metadata_content : data.http.saml_metadata[0].response_body), "\ufeff", ""))
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.saml_metadata_content) > 1 || length(var.saml_metadata_url) > 1
+      error_message = "Either 'var.saml_metadata_content' or 'var.saml_metadata_url' must be set."
     }
   }
 }
@@ -98,5 +116,19 @@ resource "aws_route53_record" "opensearch" {
   type    = "CNAME"
   ttl     = "60"
 
-  records = [aws_elasticsearch_domain.opensearch.endpoint]
+  records = [aws_opensearch_domain.opensearch.endpoint]
+}
+
+module "es_resources" {
+  source = "./modules/es_resources"
+  count  = var.create_es_resources ? 1 : 0
+
+  master_user_arn      = var.master_user_arn
+  index_template_files = var.index_template_files
+  ism_policy_files     = var.ism_policy_files
+  index_files          = var.index_files
+  role_files           = var.role_files
+  role_mapping_files   = var.role_mapping_files
+
+  depends_on = [aws_route53_record.opensearch]
 }

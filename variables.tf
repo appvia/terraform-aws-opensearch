@@ -15,10 +15,28 @@ variable "cluster_domain" {
   type        = string
 }
 
+variable "create_es_resources" {
+  description = "Indicates whether to use the ElasticSearch Provider and create ES resources (i.e. indexes, templates, ism policies, roles, role mappings)"
+  type        = bool
+  default     = false
+}
+
 variable "create_service_role" {
   description = "Indicates whether to create the service-linked role. See https://docs.aws.amazon.com/opensearch-service/latest/developerguide/slr.html"
   type        = bool
   default     = true
+}
+
+variable "ebs_enabled" {
+  description = "Enable EBS Volume storage if required for the instance type."
+  type        = bool
+  default     = false
+}
+
+variable "ebs_volume_size" {
+  description = "The EBS volume size if enabled."
+  type        = number
+  default     = 10
 }
 
 variable "master_user_arn" {
@@ -36,10 +54,10 @@ variable "master_instance_enabled" {
 variable "master_instance_type" {
   description = "The type of EC2 instances to run for each master node. A list of available instance types can you find at https://aws.amazon.com/en/opensearch-service/pricing/#On-Demand_instance_pricing"
   type        = string
-  default     = "r6gd.large.elasticsearch"
+  default     = "r6g.large.search"
 
   validation {
-    condition     = can(regex("^[m3|r3|i3|i2|r6gd]", var.master_instance_type))
+    condition     = can(regex("^[c5|c6g|i3|m5|m6g|r5|r6g|t3]", var.master_instance_type))
     error_message = "The EC2 master_instance_type must provide a SSD or NVMe-based local storage."
   }
 }
@@ -53,10 +71,10 @@ variable "master_instance_count" {
 variable "hot_instance_type" {
   description = "The type of EC2 instances to run for each hot node. A list of available instance types can you find at https://aws.amazon.com/en/opensearch-service/pricing/#On-Demand_instance_pricing"
   type        = string
-  default     = "r6gd.4xlarge.elasticsearch"
+  default     = "r6g.large.search"
 
   validation {
-    condition     = can(regex("^[m3|r3|i3|i2|r6gd]", var.hot_instance_type))
+    condition     = can(regex("^[c5|c6g|i3|m5|m6g|r5|r6g|t3]", var.hot_instance_type))
     error_message = "The EC2 hot_instance_type must provide a SSD or NVMe-based local storage."
   }
 }
@@ -74,9 +92,9 @@ variable "warm_instance_enabled" {
 }
 
 variable "warm_instance_type" {
-  description = "The type of EC2 instances to run for each warm node. A list of available instance types can you find at https://aws.amazon.com/en/elasticsearch-service/pricing/#UltraWarm_pricing"
+  description = "The type of EC2 instances to run for each warm node. A list of available instance types can you find at https://aws.amazon.com/opensearch-service/pricing/#UltraWarm_pricing"
   type        = string
-  default     = "ultrawarm1.large.elasticsearch"
+  default     = "ultrawarm1.large.search"
 }
 
 variable "warm_instance_count" {
@@ -117,6 +135,13 @@ variable "saml_entity_id" {
 variable "saml_metadata_content" {
   description = "The metadata of the SAML application in xml format."
   type        = string
+  default     = ""
+}
+
+variable "saml_metadata_url" {
+  description = "The URL to fetch SAML metadata from (if saml_metadata_content is empty)."
+  type        = string
+  default     = ""
 }
 
 variable "saml_session_timeout" {

@@ -24,6 +24,4 @@ resource "elasticsearch_opensearch_roles_mapping" "master_user_arn" {
   backend_roles = concat(try(each.value.backend_roles, []), [var.master_user_arn])
   hosts         = try(each.value.hosts, [])
   users         = try(each.value.users, [])
-
-  depends_on = [aws_route53_record.opensearch]
 }
